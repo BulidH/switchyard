@@ -3412,6 +3412,13 @@ document.getElementById("provider-form").addEventListener("submit", async (e) =>
       return { ...m, id: newModelId, providerId: newId };
     });
   }
+  // 弹窗里的模型列表就是该供应商的全集：列表中已删除（或取消勾选）的模型必须在保存时真正移除。
+  // 否则下面只做合并，被删的模型会从 state.config.models 里原样带回来，表现为删了又出现。
+  if (editId) {
+    const affectedProviderIds = new Set([newId, editId].filter(Boolean));
+    const keptModelIds = new Set(discoveredModels.map((model) => model.id));
+    models = models.filter((model) => !affectedProviderIds.has(model.providerId) || keptModelIds.has(model.id));
+  }
   // A discovery refresh and a manual entry can refer to the same local model.
   // Merge by model id in both create and edit flows so repeated saves never
   // produce the duplicate-model-id validation error.
